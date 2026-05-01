@@ -11,6 +11,8 @@ import VendorSearch from './pages/customer/VendorSearch';
 import VendorDetail from './pages/customer/VendorDetail';
 import CustomerProfile from './pages/customer/Profile';
 import VendorProfile from './pages/vendor/Profile';
+import CustomerRegister from './pages/customer/Register';
+import VendorRegister from './pages/vendor/Register';
 
 function ProtectedRoute({ children, role }) {
   const { user } = useApp();
@@ -44,6 +46,8 @@ function AppRoutes() {
           )
         }
       />
+      <Route path="/customer/register" element={<CustomerRegister />} />
+      <Route path="/vendor/register" element={<VendorRegister />} />
       <Route path="/customer" element={<ProtectedRoute role="customer"><CustomerDashboard /></ProtectedRoute>} />
       <Route path="/customer/new-request" element={<ProtectedRoute role="customer"><NewRequest /></ProtectedRoute>} />
       <Route path="/customer/request/:id" element={<ProtectedRoute role="customer"><ViewBids /></ProtectedRoute>} />

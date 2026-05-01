@@ -275,6 +275,61 @@ export default function ViewBids() {
                     <span className="price-per-plate"> · ₹{acceptedBid.pricePerPlate}/plate</span>
                   </div>
 
+                  {request.customerAddons && request.customerAddons.length > 0 && (() => {
+                    const allSuggestions = [
+                      ...(ADDON_SUGGESTIONS.veg || []),
+                      ...(ADDON_SUGGESTIONS.nonveg || []),
+                      ...(ADDON_SUGGESTIONS.both || []),
+                    ];
+                    const uniqueSuggestions = allSuggestions.filter(
+                      (s, idx, arr) => arr.findIndex(x => x.item === s.item) === idx
+                    );
+                    const addonsWithPrice = request.customerAddons.map(name => {
+                      const match = uniqueSuggestions.find(s => s.item === name);
+                      return { name, price: match?.price || 0 };
+                    });
+                    const addonTotalPrice = addonsWithPrice.reduce((sum, a) => sum + a.price * (request.plates || 0), 0);
+                    return (
+                      <div style={{
+                        marginTop: '16px', padding: '14px', background: 'rgba(232,89,12,0.08)',
+                        border: '1px solid rgba(232,89,12,0.28)', borderRadius: 'var(--radius-md)', textAlign: 'left'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '1rem' }}>✨</span>
+                          <span style={{ fontSize: '0.83rem', fontWeight: 700, color: 'var(--primary-light)' }}>
+                            Your Requested Extras
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          {addonsWithPrice.map(addon => (
+                            <div key={addon.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>• {addon.name}</span>
+                              {addon.price > 0 && (
+                                <span style={{ fontSize: '0.78rem', color: 'var(--primary-light)', fontWeight: 600 }}>
+                                  +₹{addon.price}/plate
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        {addonTotalPrice > 0 && (
+                          <div style={{
+                            marginTop: '10px', paddingTop: '8px', borderTop: '1px solid rgba(232,89,12,0.2)',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          }}>
+                            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Estimated extras total</span>
+                            <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--primary-light)' }}>
+                              ₹{addonTotalPrice.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        )}
+                        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '10px', marginBottom: 0 }}>
+                          💬 Discuss and confirm pricing for these extras when you contact the vendor.
+                        </p>
+                      </div>
+                    );
+                  })()}
+
                   {!showCancelBidConfirm ? (
                     <button
                       className="btn btn-danger btn-sm"

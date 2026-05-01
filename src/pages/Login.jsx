@@ -9,6 +9,7 @@ import {
   getOtpSessionInfo,
 } from '../utils/otpEngine';
 import { sanitizePhone, isValidPhone } from '../utils/security';
+import { getCustomer } from '../utils/data';
 
 export default function Login() {
   const [step, setStep] = useState('phone'); // phone | otp
@@ -84,7 +85,7 @@ export default function Login() {
     const clean = sanitizePhone(phone);
 
     if (!isValidPhone(clean)) {
-      setError('Please enter a valid 10-digit Indian mobile number (starts with 6-9)');
+      setError('Please enter a valid 10-digit Indian mobile number (starts with 6-9). Repeating or sequential numbers are not allowed.');
       return;
     }
 
@@ -165,15 +166,20 @@ export default function Login() {
       return;
     }
 
-    // ✅ OTP verified - Automatically login as customer
+    // OTP verified
     setError('');
-    const userData = {
-      phone,
-      role: 'customer',
-      id: `c_${phone}`,
-    };
-    login(userData);
-    navigate('/customer/new-request');
+    
+    // Check if customer exists in DB
+    getCustomer(phone).then((customer) => {
+      if (customer) {
+        // Existing user -> Login
+        login({ ...customer, role: 'customer' });
+        navigate('/customer/new-request');
+      } else {
+        // New user -> Navigate to Registration
+        navigate('/customer/register', { state: { phone } });
+      }
+    });
   };
 
   const handleChangeNumber = () => {

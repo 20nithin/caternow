@@ -40,8 +40,19 @@ export function sanitizePhone(str) {
 
 export function isValidPhone(phone) {
   const clean = sanitizePhone(phone);
-  // Indian mobile: starts with 6-9, exactly 10 digits
-  return /^[6-9]\d{9}$/.test(clean);
+  
+  // 1. Basic format: Indian mobile starting with 6-9, exactly 10 digits
+  if (!/^[6-9]\d{9}$/.test(clean)) return false;
+
+  // 2. Block completely repeating numbers (e.g., 8888888888, 9999999999)
+  if (/^(\d)\1{9}$/.test(clean)) return false;
+
+  // 3. Block sequential numbers (e.g., 1234567890, 9876543210)
+  const sequentialUp = '01234567890123456789';
+  const sequentialDown = '98765432109876543210';
+  if (sequentialUp.includes(clean) || sequentialDown.includes(clean)) return false;
+
+  return true;
 }
 
 // ===== EVENT DATE VALIDATION =====

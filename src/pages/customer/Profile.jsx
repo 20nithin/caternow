@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { updateCustomer } from '../../utils/data';
 
 const STATUS_MAP = {
   searching: { cls: 'badge-searching', label: '🔍 Searching',   icon: '🔍' },
@@ -67,14 +68,20 @@ export default function CustomerProfile() {
 
   const getBidCount = (reqId) => allBids.filter(b => b.requestId === reqId).length;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const trimmedName  = name.trim();
     const trimmedEmail = email.trim();
     if (trimmedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       setSaveFeedback('⚠️ Enter a valid email address.');
       return;
     }
+    
+    // Update local context
     updateUser({ name: trimmedName, email: trimmedEmail });
+    
+    // Update backend
+    await updateCustomer(user.phone, { name: trimmedName, email: trimmedEmail });
+    
     setEditing(false);
     setSaveFeedback('✅ Profile updated!');
     setTimeout(() => setSaveFeedback(''), 2500);

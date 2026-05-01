@@ -204,6 +204,60 @@ export async function seedVendors() {
   }
 }
 
+// ===== CUSTOMERS =====
+export async function getCustomer(phone) {
+  if (isSupabaseConfigured()) {
+    const { data, error } = await supabase.from('customers').select('*').eq('phone', phone).single();
+    if (error) return null;
+    return toCamel(data);
+  }
+  const customers = JSON.parse(localStorage.getItem('caternow_customers') || '[]');
+  return customers.find(c => c.phone === phone) || null;
+}
+
+export async function createCustomer(customerData) {
+  const normalized = {
+    id: customerData.id || makeEntityId('cust'),
+    phone: customerData.phone,
+    name: customerData.name || null,
+    email: customerData.email || null,
+    isVerified: true
+  };
+
+  if (isSupabaseConfigured()) {
+    const { data, error } = await supabase.from('customers').insert([toSnake(normalized)]).select().single();
+    if (error) { console.error('createCustomer:', error); return null; }
+    
+    return toCamel(data);
+  }
+
+  const customers = JSON.parse(localStorage.getItem('caternow_customers') || '[]');
+  customers.push(normalized);
+  localStorage.setItem('caternow_customers', JSON.stringify(customers));
+  return normalized;
+}
+
+export async function updateCustomer(phone, updates) {
+  if (isSupabaseConfigured()) {
+    const { data, error } = await supabase
+      .from('customers')
+      .update(toSnake(updates))
+      .eq('phone', phone)
+      .select()
+      .single();
+    if (error) { console.error('updateCustomer:', error); return null; }
+    return toCamel(data);
+  }
+  const customers = JSON.parse(localStorage.getItem('caternow_customers') || '[]');
+  const idx = customers.findIndex((c) => c.phone === phone);
+  if (idx !== -1) {
+    customers[idx] = { ...customers[idx], ...updates };
+    localStorage.setItem('caternow_customers', JSON.stringify(customers));
+    return customers[idx];
+  }
+  return null;
+}
+
 // ===== USER =====
 export function getUser() {
   try {
@@ -268,7 +322,10 @@ export async function createRequest(request) {
 
   if (isSupabaseConfigured()) {
     const { error } = await supabase.from('requests').insert([toSnake(newReq)]);
-    if (error) console.error('createRequest:', error);
+    if (error) {
+      console.error('createRequest:', error);
+      return null;
+    }
   } else {
     const requests = JSON.parse(localStorage.getItem(STORAGE_KEYS.REQUESTS) || '[]');
     requests.push(newReq);
@@ -361,6 +418,8 @@ export async function upsertVendorProfile(vendor) {
   const normalized = {
     id: vendor.id,
     name: vendor.name || 'Business User',
+    businessName: vendor.businessName || null,
+    email: vendor.email || null,
     phone: vendor.phone,
     lat: vendor.lat,
     lng: vendor.lng,

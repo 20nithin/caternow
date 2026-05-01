@@ -9,10 +9,7 @@ import {
   getOtpSessionInfo,
 } from '../../utils/otpEngine';
 import { sanitizePhone, isValidPhone } from '../../utils/security';
-import { upsertVendorProfile } from '../../utils/data';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { getVendor } from '../../utils/data';
 
 // Fix Leaflet default marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -107,7 +104,7 @@ export default function VendorLogin() {
     const clean = sanitizePhone(phone);
 
     if (!isValidPhone(clean)) {
-      setError('Please enter a valid 10-digit Indian mobile number (starts with 6-9)');
+      setError('Please enter a valid 10-digit Indian mobile number (starts with 6-9). Repeating or sequential numbers are not allowed.');
       return;
     }
 
@@ -179,60 +176,18 @@ export default function VendorLogin() {
       return;
     }
 
-    // Success -> Proceed to vendor setup (location detection)
+    // Success -> Check if vendor exists
     setError('');
-    handleVendorSetup();
-  };
-
-  const handleVendorSetup = () => {
-    setStep('detecting');
-    setDetectingLocation(true);
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setTempPosition([pos.coords.latitude, pos.coords.longitude]);
-          setStep('confirm_location');
-          setDetectingLocation(false);
-        },
-        () => {
-          showToast('📍 GPS unavailable — using default location (Bangalore)');
-          setTempPosition([12.9716, 77.5946]);
-          setStep('confirm_location');
-          setDetectingLocation(false);
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    } else {
-      showToast('📍 Geolocation not supported — using default location');
-      setTempPosition([12.9716, 77.5946]);
-      setStep('confirm_location');
-      setDetectingLocation(false);
-    }
-  };
-
-  const handleFinishSetup = async () => {
-    if (!tempPosition || savingProfile) return;
-    setSavingProfile(true);
-    const userData = {
-      phone,
-      role: 'vendor',
-      id: `v_${phone}`,
-      name: 'Business User',
-      lat: tempPosition[0],
-      lng: tempPosition[1],
-      foodType: 'both',
-      radius: 50,
-    };
-    const persisted = await upsertVendorProfile(userData);
-    if (!persisted) {
-      setError('Could not save vendor profile. Please try again.');
-      setSavingProfile(false);
-      return;
-    }
-    login(userData);
-    setSavingProfile(false);
-    navigate('/vendor');
+    getVendor(`v_${phone}`).then(vendor => {
+      if (vendor) {
+        // Existing Vendor -> Login
+        login({ ...vendor, role: 'vendor' });
+        navigate('/vendor');
+      } else {
+        // New Vendor -> Navigate to Registration
+        navigate('/vendor/register', { state: { phone } });
+      }
+    });
   };
 
   const handleChangeNumber = () => {
@@ -390,61 +345,7 @@ export default function VendorLogin() {
         </form>
       )}
 
-      {step === 'confirm_location' && (
-        <div className="animate-fade-in">
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px' }}>Confirm Your Location 📍</h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '20px', fontSize: '0.9rem' }}>
-            We use your location to show you catering requests in your area. Drag the marker if needed.
-          </p>
 
-          <div className="map-container" style={{ height: '300px', marginBottom: '24px', borderRadius: 'var(--radius-md)', overflow: 'hidden', border: '1.5px solid var(--border)' }}>
-            {tempPosition && (
-              <MapContainer
-                center={tempPosition}
-                zoom={13}
-                style={{ height: '100%', width: '100%' }}
-                zoomControl={false}
-              >
-                <TileLayer
-                  attribution='&copy; OpenStreetMap'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                <LocationPicker position={tempPosition} setPosition={setTempPosition} />
-              </MapContainer>
-            )}
-          </div>
-
-          {error && <p style={{ color: 'var(--danger)', fontSize: '0.85rem', marginBottom: '16px' }}>{error}</p>}
-
-          <button
-            className="btn btn-primary btn-block btn-lg"
-            onClick={handleFinishSetup}
-            disabled={savingProfile}
-          >
-            {savingProfile ? 'Saving profile...' : 'Confirm & Finish Setup →'}
-          </button>
-          
-          <button
-            className="btn btn-secondary btn-block mt-md"
-            onClick={() => setStep('phone')}
-          >
-            ← Back
-          </button>
-        </div>
-      )}
-
-      {step === 'detecting' && (
-        <div className="animate-fade-in text-center">
-          <div className="loading-spinner" style={{ margin: '0 auto 24px', width: '40px', height: '40px', border: '4px solid rgba(255,255,255,0.1)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '8px' }}>Detecting Location...</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Setting up your vendor dashboard for your current area.
-          </p>
-          <style>{`
-            @keyframes spin { to { transform: rotate(360deg); } }
-          `}</style>
-        </div>
-      )}
     </div>
   );
 }
