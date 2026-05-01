@@ -2,6 +2,14 @@
 -- CaterNow FINAL PRODUCTION DATABASE SCHEMA
 -- ============================================
 
+-- Wipe old tables to ensure clean schema update
+DROP TABLE IF EXISTS otp_sessions CASCADE;
+DROP TABLE IF EXISTS bids CASCADE;
+DROP TABLE IF EXISTS requests CASCADE;
+DROP TABLE IF EXISTS vendors CASCADE;
+DROP TABLE IF EXISTS referrals CASCADE;
+DROP TABLE IF EXISTS customers CASCADE;
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ==========================================
