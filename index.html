@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="description" content="CaterNow - Find the best caterers near your event. Get competitive bids from nearby vendors." />
+    <meta name="theme-color" content="#0F0F12" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' https://*.tile.openstreetmap.org https://cdnjs.cloudflare.com data: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co ws://localhost:* ws://127.0.0.1:*; worker-src 'self';"
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CaterNow" />
+
+    <!-- SEO -->
+    <meta name="keywords" content="catering, caterers, food, events, wedding, party, marketplace" />
+    <meta name="author" content="CaterNow" />
+    <meta property="og:title" content="CaterNow - Catering Marketplace" />
+    <meta property="og:description" content="Find the best caterers near your event. Get competitive bids from nearby vendors." />
+    <meta property="og:type" content="website" />
+
+    <title>CaterNow - Catering Marketplace</title>
+    <style>
+      /* Prevent FOUC */
+      body {
+        background: #0f0f12;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script type="module">
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          if (import.meta.env.PROD) {
+            try {
+              const reg = await navigator.serviceWorker.register('/sw.js');
+              console.log('SW registered:', reg.scope);
+            } catch (err) {
+              console.warn('SW registration failed:', err);
+            }
+            return;
+          }
+
+          // In dev, clear old SW + caches to prevent stale app-shell blank screens.
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((reg) => reg.unregister()));
+
+          if ('caches' in window) {
+            const keys = await caches.keys();
+            await Promise.all(keys.map((key) => caches.delete(key)));
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

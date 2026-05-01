@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CaterNow - Test Setup</title>
+  <style>
+    body { font-family: sans-serif; background: #0F0F12; color: #F1F1F4; padding: 40px; max-width: 600px; margin: 0 auto; }
+    h1 { color: #E8590C; }
+    button { padding: 12px 24px; margin: 8px 4px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }
+    .btn-primary { background: #E8590C; color: white; }
+    .btn-danger { background: #DC2626; color: white; }
+    .btn-success { background: #059669; color: white; }
+    pre { background: #1A1A23; padding: 16px; border-radius: 8px; overflow: auto; font-size: 12px; }
+    .status { color: #059669; margin-top: 12px; }
+    a { color: #FB923C; }
+  </style>
+</head>
+<body>
+  <h1>🍽️ CaterNow Test Setup</h1>
+  <p>Use these buttons to set up test data for the full bidding flow.</p>
+  
+  <h3>Step 1: Setup Test Data</h3>
+  <button class="btn-primary" onclick="setupAll()">🚀 Setup Full Test Scenario</button>
+  <button class="btn-danger" onclick="clearAll()">🗑️ Clear All Data</button>
+  
+  <h3>Step 2: Test as Customer</h3>
+  <button class="btn-success" onclick="loginAsCustomer()">👤 Login as Customer</button>
+  <p><small>→ Will redirect to <a href="/customer">/customer</a></small></p>
+  
+  <h3>Step 3: Test as Vendor</h3>
+  <button class="btn-success" onclick="loginAsVendor()">👨‍🍳 Login as Vendor</button>
+  <p><small>→ Will redirect to <a href="/vendor">/vendor</a></small></p>
+  
+  <div id="status"></div>
+  <h3>Current Data</h3>
+  <pre id="data"></pre>
+
+  <script>
+    function log(msg) {
+      document.getElementById('status').innerHTML = '<p class="status">✅ ' + msg + '</p>';
+      showData();
+    }
+
+    function showData() {
+      const data = {
+        user: JSON.parse(localStorage.getItem('caternow_user') || 'null'),
+        requests: JSON.parse(localStorage.getItem('caternow_requests') || '[]'),
+        bids: JSON.parse(localStorage.getItem('caternow_bids') || '[]'),
+        vendors: JSON.parse(localStorage.getItem('caternow_vendors') || '[]').length + ' vendors seeded',
+      };
+      document.getElementById('data').textContent = JSON.stringify(data, null, 2);
+    }
+
+    function setupAll() {
+      // Seed vendors (Bangalore area)
+      const vendors = [
+        { id: 'v1', name: 'Royal Feast Caterers', phone: '9876543210', lat: 12.9716, lng: 77.5946, foodType: 'both', radius: 20, fssai: 'FSSAI001', rating: 4.5 },
+        { id: 'v2', name: 'Spice Garden Kitchen', phone: '9876543211', lat: 12.9352, lng: 77.6245, foodType: 'veg', radius: 15, fssai: 'FSSAI002', rating: 4.8 },
+        { id: 'v3', name: 'Grand Biryani House', phone: '9876543212', lat: 12.9611, lng: 77.6387, foodType: 'nonveg', radius: 25, fssai: 'FSSAI003', rating: 4.2 },
+        { id: 'v4', name: 'Annapurna Catering', phone: '9876543213', lat: 13.0358, lng: 77.5970, foodType: 'veg', radius: 30, fssai: 'FSSAI004', rating: 4.7 },
+        { id: 'v5', name: 'Tandoori Nights', phone: '9876543214', lat: 12.9141, lng: 77.6411, foodType: 'both', radius: 20, fssai: 'FSSAI005', rating: 4.4 },
+      ];
+      localStorage.setItem('caternow_vendors', JSON.stringify(vendors));
+
+      // Create a customer request near Bangalore
+      const requests = [{
+        id: 'req_test_001',
+        eventName: 'Raj Wedding Reception',
+        eventDate: '2026-05-20T18:00',
+        plates: 200,
+        foodType: 'both',
+        menuNotes: 'North Indian and South Indian mix with live counters',
+        lat: 12.9716,
+        lng: 77.5946,
+        customerPhone: '9999999999',
+        status: 'searching',
+        currentRadius: 15,
+        createdAt: new Date().toISOString(),
+        acceptedVendors: [],
+      }];
+      localStorage.setItem('caternow_requests', JSON.stringify(requests));
+      localStorage.setItem('caternow_bids', '[]');
+
+      log('Test scenario ready! Customer request near Bangalore with 5 vendors in range.');
+    }
+
+    function clearAll() {
+      localStorage.clear();
+      log('All data cleared.');
+    }
+
+    function loginAsCustomer() {
+      localStorage.setItem('caternow_user', JSON.stringify({
+        phone: '9999999999',
+        role: 'customer',
+        id: 'c_9999999999'
+      }));
+      window.location.href = '/customer';
+    }
+
+    function loginAsVendor() {
+      localStorage.setItem('caternow_user', JSON.stringify({
+        phone: '9876543210',
+        role: 'vendor',
+        id: 'v1',
+        name: 'Royal Feast Caterers',
+        lat: 12.9716,
+        lng: 77.5946,
+        foodType: 'both',
+        radius: 20
+      }));
+      window.location.href = '/vendor';
+    }
+
+    showData();
+  </script>
+</body>
+</html>
